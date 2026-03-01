@@ -71,26 +71,31 @@ function abs() {
 function get_ip_public() {
     local public_ip=""
 
-    # 尝试 Cloudflare trace API
+    # 优先尝试 IPv6 API
     if [ -z "$public_ip" ]; then
-        public_ip=$(curl -4 -s --connect-timeout 5 --max-time 10 https://1.1.1.1/cdn-cgi/trace -A Mozilla 2>/dev/null | grep "^ip=" | cut -d'=' -f2)
+        public_ip=$(curl -6 -s --connect-timeout 5 --max-time 10 https://api64.ipify.org 2>/dev/null)
     fi
-    
-    # 尝试 ip.sb API获取公网IP
     if [ -z "$public_ip" ]; then
-        public_ip=$(curl -s --connect-timeout 5 --max-time 10 https://api.ip.sb/ip -A Mozilla --ipv4 2>/dev/null)
+        public_ip=$(curl -6 -s --connect-timeout 5 --max-time 10 https://ipv6.icanhazip.com 2>/dev/null)
     fi
-    
-    # 尝试 ipinfo.io API
     if [ -z "$public_ip" ]; then
-        public_ip=$(curl -s --connect-timeout 5 --max-time 10 https://ipinfo.io/ip -A Mozilla --ipv4 2>/dev/null)
+        public_ip=$(curl -6 -s --connect-timeout 5 --max-time 10 https://ifconfig.co/ip 2>/dev/null)
     fi
-    
-    # 如果所有API都失败，退出
+
+    # 如果 IPv6 获取失败，再尝试 IPv4
+    if [ -z "$public_ip" ]; then
+        public_ip=$(curl -4 -s --connect-timeout 5 --max-time 10 https://api.ip.sb/ip 2>/dev/null)
+    fi
+    if [ -z "$public_ip" ]; then
+        public_ip=$(curl -4 -s --connect-timeout 5 --max-time 10 https://ipinfo.io/ip 2>/dev/null)
+    fi
+
     if [ -z "$public_ip" ]; then
         print_error_exit "Failed to get public IP address. Please check your network connection."
     fi
+
     echo "$public_ip"
+
 }
 
 function get_ip_private() {
