@@ -579,7 +579,14 @@ function get_run_command(){
       
       # ./mtg simple-run -n 1.1.1.1 -t 30s -a 512kib 0.0.0.0:$port $client_secret >/dev/null 2>&1 &
       [[ -f "$BINARY_MTG_PATH" ]] || (print_warning "MTProxy 代理程序不存在请重新安装!" && exit 1)
-      echo "$BINARY_MTG_PATH run $client_secret $adtag -b 0.0.0.0:$port --multiplex-per-connection 500 --prefer-ip=ipv4 -t $local_ip:$statport" -4 "$PUBLIC_IP:$port"
+if [[ "$PUBLIC_IP" =~ ":" ]]; then
+    # IPv6 地址
+    echo "$BINARY_MTG_PATH run $client_secret $adtag -b [::]:$port --multiplex-per-connection 500 --prefer-ip=ipv6 -t [::1]:$statport -6 [$PUBLIC_IP]:$port"
+else
+    # IPv4 地址
+    echo "$BINARY_MTG_PATH run $client_secret $adtag -b 0.0.0.0:$port --multiplex-per-connection 500 --prefer-ip=ipv4 -t 127.0.0.1:$statport -4 $PUBLIC_IP:$port"
+fi
+      
   elif [[ "$mtg_provider" == "python-mtprotoproxy" ]]; then
         cat >$WORKDIR/bin/config.py <<EOF
 PORT = ${port}
